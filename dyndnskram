@@ -1,0 +1,27 @@
+#!/bin/bash
+# betreffende netzwerkkarte angeben
+netzwerk=enp0s3
+# betreffende domain angeben
+domainname="domain.name"
+# echte ipv4 holen
+ipv4add=$(curl -4 https://f.kj.gd/ip.php 2> /dev/null)
+# echte ipv6 holen
+ipv6add=$(curl -6 https://f.kj.gd/ip.php 2> /dev/null)
+# geroutete ipv6 vom system holen
+lala=$(ip -6 addr show dev $netzwerk | grep "inet6 2003:")
+# die erste adresse ist die gültige alles drum herum abschneiden
+bla=$(echo ${lala:10:36})
+# ipv4 und ipv6 aus dem DNS holen (wurden von dyndns gesetzt)
+ggg="$(host "$domainname" 1.1.1.1)"
+# ipv4 filtern
+ipv4dns="${ggg##*has address }"
+ipv4dns="${ipv4dns%$'\n'*}"
+# ipv6 filtern
+ipv6dns="${ggg##*has IPv6 address }"
+#testausgabe
+# echo "lala= "$lala
+echo "Echte ipv4:                    "$ipv4add
+echo "Echte ipv6:                    "$ipv6add
+echo "Geroutete ipv6 aus dem System: "$bla
+echo "DNS Daten ipv4:                "$ipv4dns
+echo "DNS Daten ipv6:                "$ipv6dns
