@@ -5,6 +5,8 @@ netzwerk=enp0s3
 domainname="domain.name"
 # echte ipv4 holen
 ipv4add=$(curl -4 https://f.kj.gd/ip.php 2> /dev/null)
+# echte ipv4 aus der Fritzbox holen
+ipv4fritz=$(curl "http://fritz.box:49000/igdupnp/control/WANIPConn1" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:schemas-upnp-org:service:WANIPConnection:1#GetExternalIPAddress" -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:GetExternalIPAddress xmlns:u='urn:schemas-upnp-org:service:WANIPConnection:1' /> </s:Body> </s:Envelope>" -s | grep -Eo '\<[[:digit:]]{1,3}(\.[[:digit:]]{1,3}){3}\>')
 # echte ipv6 holen
 ipv6add=$(curl -6 https://f.kj.gd/ip.php 2> /dev/null)
 # geroutete ipv6 vom system holen
@@ -21,6 +23,7 @@ ipv6dns="${ggg##*has IPv6 address }"
 #testausgabe
 # echo "lala= "$lala
 echo "Echte ipv4:                    "$ipv4add
+echo "IPv4 aus Fritzbox (auch echt): "$ipv4fritz
 echo "Echte ipv6:                    "$ipv6add
 echo "Geroutete ipv6 aus dem System: "$bla
 echo "DNS Daten ipv4:                "$ipv4dns
