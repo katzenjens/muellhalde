@@ -9,6 +9,9 @@ ipv4add=$(curl -4 https://f.kj.gd/ip.php 2> /dev/null)
 ipv4fritz=$(curl "http://fritz.box:49000/igdupnp/control/WANIPConn1" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:schemas-upnp-org:service:WANIPConnection:1#GetExternalIPAddress" -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:GetExternalIPAddress xmlns:u='urn:schemas-upnp-org:service:WANIPConnection:1' /> </s:Body> </s:Envelope>" -s | grep -Eo '\<[[:digit:]]{1,3}(\.[[:digit:]]{1,3}){3}\>')
 # echte ipv6 holen
 ipv6add=$(curl -6 https://f.kj.gd/ip.php 2> /dev/null)
+# aktuellen ipv6 Prefix aus der Fritzbox holen
+ipv6fritz="$(curl "http://fritz.box:49000/igdupnp/control/WANIPConn1" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:schemas-upnp-org:service:WANIPConnection:1#X_AVM_DE_GetIPv6Prefix" -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:X_AVM_DE_GetIPv6Prefix xmlns:u='urn:schemas-upnp-org:service:WANIPConnection:1' /> </s:Body> </s:Envelope>" -s )"
+ipv6fritz="$(echo $ipv6fritz | sed 's/.*<NewIPv6Prefix>//; s/<.*//')"
 # geroutete ipv6 vom system holen
 lala=$(ip -6 addr show dev $netzwerk | grep "inet6 2003:")
 # die erste adresse ist die gültige alles drum herum abschneiden
@@ -24,6 +27,7 @@ ipv6dns="${ggg##*has IPv6 address }"
 # echo "lala= "$lala
 echo "Echte ipv4:                    "$ipv4add
 echo "IPv4 aus Fritzbox (auch echt): "$ipv4fritz
+echo "IPv6 Prefix aus Fritzbox     : "$ipv6fritz
 echo "Echte ipv6:                    "$ipv6add
 echo "Geroutete ipv6 aus dem System: "$bla
 echo "DNS Daten ipv4:                "$ipv4dns
