@@ -37,6 +37,7 @@ if [[ "$ipv6dns" == *"$ipv6fritz"* ]]; then
      echo "ipv6 Prefix von fritzbox und DNS identisch"
 else
      echo "ipv6 Prefix ist nicht mehr gültig! DynDNS Aufruf notwendig!"
+     # hier selfhost Username und Passwort für den dyndns Account eingeben
      curl -6 'https://carol.selfhost.de/update?username=geheim&password=auchgeheim'
      # wartezeit einfügen bevor ipv4 erneuert wird da selfhost sonst 503 auswirft
      sleep 30
@@ -45,5 +46,6 @@ if [ "$ipv4fritz" = "$ipv4dns" ]; then
      echo "IPv4 von Fritzbox und DNS identisch."
 else
      echo "IPv4 von Fritzbox und DNS unterschiedlich. DynDNS Aufruf notwendig"
+     # hier selfhost Username und Passwort für den dyndns Account eingeben
      curl -4 'https://carol.selfhost.de/update?username=geheim&password=auchgeheim'
 fi
