@@ -1,0 +1,49 @@
+#!/bin/bash
+# betreffende netzwerkkarte angeben
+netzwerk=enp0s3
+# betreffende domain angeben
+domainname="domain.endung"
+# prüfen ob internet aktiv, wenn nicht: Abbruch
+if ping -c 1 -W 2 8.8.8.8 > /dev/null 2>&1; then
+    echo "Internetverbindung besteht."
+else
+    echo "Keine Internetverbindung."
+    exit 1
+fi
+# FritzBox externe ipv4 holen
+ipv4fritz="$(curl "http://fritz.box:49000/igdupnp/control/WANIPConn1" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:schemas-upnp-org:service:WANIPConnection:1#GetExternalIPAddress" -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:GetExternalIPAddress xmlns:u='urn:schemas-upnp-org:service:WANIPConnection:1' /> </s:Body> </s:Envelope>" -s | grep -Eo '\<[[:digit:]]{1,3}(\.[[:digit:]]{1,3}){3}\>')"
+# aktuellen ipv6 Prefix aus der Fritzbox holen
+ipv6fritz="$(curl "http://fritz.box:49000/igdupnp/control/WANIPConn1" -H "Content-Type: text/xml; charset="utf-8"" -H "SoapAction:urn:schemas-upnp-org:service:WANIPConnection:1#X_AVM_DE_GetIPv6Prefix" -d "<?xml version='1.0' encoding='utf-8'?> <s:Envelope s:encodingStyle='http://schemas.xmlsoap.org/soap/encoding/' xmlns:s='http://schemas.xmlsoap.org/soap/envelope/'> <s:Body> <u:X_AVM_DE_GetIPv6Prefix xmlns:u='urn:schemas-upnp-org:service:WANIPConnection:1' /> </s:Body> </s:Envelope>" -s )"
+ipv6fritz="$(echo $ipv6fritz | sed 's/.*<NewIPv6Prefix>//; s/<.*//')"
+ipv6fritz="${ipv6fritz%?}"
+# geroutete ipv6 vom system holen
+lala=$(ip -6 addr show dev $netzwerk | grep "inet6 2")
+# die erste adresse ist die gültige alles drum herum abschneiden
+bla=$(echo ${lala:10:36})
+# ipv4 und ipv6 aus dem DNS holen (wurden von dyndns gesetzt)
+ggg="$(host "$domainname" 1.1.1.1)"
+# ipv4 filtern
+ipv4dns="${ggg##*has address }"
+ipv4dns="${ipv4dns%$'\n'*}"
+# ipv6 filtern
+ipv6dns="${ggg##*has IPv6 address }"
+#testausgabe
+echo "FritzBox ipv4                  "$ipv4fritz
+echo "Fritzbox ipv6 Prefix:          "$ipv6fritz
+echo "Geroutete ipv6 aus dem System: "$bla
+echo "DNS Daten ipv4:                "$ipv4dns
+echo "DNS Daten ipv6:                "$ipv6dns
+if [[ "$ipv6dns" == *"$ipv6fritz"* ]]; then
+     echo "ipv6 Prefix von fritzbox und DNS identisch"
+else
+     echo "ipv6 Prefix ist nicht mehr gültig! DynDNS Aufruf notwendig!"
+     curl -6 'https://carol.selfhost.de/update?username=geheim&password=auchgeheim'
+     # wartezeit einfügen bevor ipv4 erneuert wird da selfhost sonst 503 auswirft
+     sleep 30
+fi
+if [ "$ipv4fritz" = "$ipv4dns" ]; then
+     echo "IPv4 von Fritzbox und DNS identisch."
+else
+     echo "IPv4 von Fritzbox und DNS unterschiedlich. DynDNS Aufruf notwendig"
+     curl -4 'https://carol.selfhost.de/update?username=geheim&password=auchgeheim'
+fi
